@@ -49,5 +49,5 @@ $(EE_ASM_DIR):
 $(EE_OBJS_DIR):
 	@mkdir -p $@
 
-$(EE_OBJS_DIR)/%.o: %.c | $(EE_OBJS_DIR)
+$(EE_OBJS_DIR)%.o: %.c | $(EE_OBJS_DIR)
 	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
