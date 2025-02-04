@@ -14,7 +14,7 @@ EE_CFLAGS := -mno-gpopt -G0
 all: githash.h $(EE_BIN_PKD)
 
 $(EE_BIN_PKD): $(EE_BIN)
-    ps2-packer $(EE_BIN) $(EE_BIN_PKD)
+	ps2-packer $(EE_BIN) $(EE_BIN_PKD)
 
 $(EE_BIN): $(EE_OBJS)
     $(EE_CC) $(EE_LDFLAGS) -o $@ $^
