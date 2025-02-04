@@ -17,8 +17,7 @@ $(EE_BIN_PKD): $(EE_BIN)
 	ps2-packer $(EE_BIN) $(EE_BIN_PKD)
 
 $(EE_BIN): $(EE_OBJS)
-    $(EE_CC) $(EE_LDFLAGS) -o $@ $^
-    $(EE_CC) $(EE_LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^
 
 run: all
 	ps2client -h 192.168.0.10 -t 1 execee host:$(EE_BIN)
