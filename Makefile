@@ -13,6 +13,20 @@ EE_CFLAGS := -mno-gpopt -G0
 
 all: githash.h $(EE_BIN_PKD)
 
+$(EE_BIN_PKD): $(EE_BIN)
+	ps2-packer $< $@
+
+run: all
+	ps2client -h 192.168.0.10 -t 1 execee host:$(EE_BIN)
+reset: clean
+	ps2client -h 192.168.0.10 reset
+
+format:
+	find . -type f -a \( -iname \*.h -o -iname \*.c \) | xargs clang-format -i
+
+format-check:
+	@! find . -type f -a \( -iname \*.h -o -iname \*.c \) | xargs clang-format -style=file -output-replacements-xml | grep "<replacement " >/dev/null
+
 githash.h:
 	printf '#ifndef ULE_VERDATE\n#define ULE_VERDATE "' > $@ && \
 	git show -s --format=%cd --date=local | tr -d "\n" >> $@ && \
