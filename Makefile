@@ -17,7 +17,7 @@ $(EE_BIN_PKD): $(EE_BIN)
 	ps2-packer $(EE_BIN) $(EE_BIN_PKD)
 
 $(EE_BIN): $(EE_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(EE_CC) $(LDFLAGS) -o $@ $^
 
 run: all
 	ps2client -h 192.168.0.10 -t 1 execee host:$(EE_BIN)
@@ -49,5 +49,11 @@ $(EE_ASM_DIR):
 $(EE_OBJS_DIR):
 	@mkdir -p $@
 
-$(EE_OBJS_DIR)%.o: %.c | $(EE_OBJS_DIR)
+$(EE_OBJS_DIR)%.o: $(EE_SRC_DIR)%.c | $(EE_OBJS_DIR)
 	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
+
+$(EE_OBJS_DIR)%.o: $(EE_ASM_DIR)%.c | $(EE_OBJS_DIR)
+	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
+
+include $(PS2SDK)/samples/Makefile.pref
+include $(PS2SDK)/samples/Makefile.eeglobal
