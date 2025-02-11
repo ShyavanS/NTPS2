@@ -249,14 +249,8 @@ u32 get_ntp_time(void) {
     time_packet.tx_tm_s = ntohl(time_packet.tx_tm_s);
     time_packet.rx_tm_s = ntohl(time_packet.rx_tm_s);
 
-    scr_printf("%d\n", time_packet.tx_tm_s);
-    scr_printf("%d\n", time_packet.rx_tm_s);
-    scr_printf("%d\n", t_tx_ntp);
-    scr_printf("%d\n", t_rx_ntp);
     time_offset = ((int32_t)(time_packet.rx_tm_s - t_tx_ntp) + (int32_t)(time_packet.tx_tm_s - t_rx_ntp)) / 2;
     timestamp = time_packet.tx_tm_s + time_offset;
-    scr_printf("%d\n", time_offset);
-    scr_printf("%d\n", timestamp);
     
     return timestamp;
 }
