@@ -1,6 +1,6 @@
 EE_BIN = NTPS2-UNC.ELF
 EE_BIN_PKD = NTPS2.ELF
-EE_OBJS = main.o
+EE_OBJS = main.o DEV9_irx.o NETMAN_irx.o SMAP_irx.o
 
 EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
@@ -9,7 +9,11 @@ EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 EE_INCS := -I$(PS2DEV)/gsKit/include -I$(PS2SDK)/ports/include
 
 EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib -L$(PS2SDK)/ports/lib -s
+EE_LIBS = -lgskit -ldmakit -ljpeg_ps2_addons -lpng -ljpeg -lpad -lmc -lkbd -lm \
+	-lpatches -lpoweroff -ldebug -lsior -lps2ips -lps2ip -lnetman
 EE_CFLAGS := -mno-gpopt -G0
+
+main.o: main.c ntps2_logo.h
 
 all: githash.h $(EE_BIN_PKD)
 
@@ -17,7 +21,7 @@ $(EE_BIN_PKD): $(EE_BIN)
 	ps2-packer $(EE_BIN) $(EE_BIN_PKD)
 
 $(EE_BIN): $(EE_OBJS)
-	$(EE_CC) $(LDFLAGS) -o $@ $^
+	$(EE_CC) $(EE_LDFLAGS) -o $@ $^
 
 run: all
 	ps2client -h 192.168.0.10 -t 1 execee host:$(EE_BIN)
@@ -50,9 +54,6 @@ $(EE_OBJS_DIR):
 	@mkdir -p $@
 
 $(EE_OBJS_DIR)%.o: $(EE_SRC_DIR)%.c | $(EE_OBJS_DIR)
-	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
-
-$(EE_OBJS_DIR)%.o: $(EE_ASM_DIR)%.c | $(EE_OBJS_DIR)
 	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
 
 include $(PS2SDK)/samples/Makefile.pref
