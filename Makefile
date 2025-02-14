@@ -1,6 +1,6 @@
 EE_BIN = NTPS2-UNC.ELF
 EE_BIN_PKD = NTPS2.ELF
-EE_OBJS = main.o DEV9_irx.o NETMAN_irx.o SMAP_irx.o
+EE_OBJS = main.o DEV9_irx.o NETMAN_irx.o SMAP_irx.o time_math.o ntp.o net.o controller.o
 
 EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
@@ -13,7 +13,7 @@ EE_LIBS = -lgskit -ldmakit -ljpeg_ps2_addons -lpng -ljpeg -lpad -lmc -lkbd -lm \
 	-lpatches -lpoweroff -ldebug -lsior -lps2ips -lps2ip -lnetman
 EE_CFLAGS := -mno-gpopt -G0
 
-main.o: main.c ntps2_logo.h
+main.o: main.c ntps2_logo.h time_math.h ntp.h net.h controller.h
 
 all: githash.h $(EE_BIN_PKD)
 
