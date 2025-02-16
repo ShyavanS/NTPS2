@@ -3,7 +3,7 @@
 
 const u32 NTP_TO_Y2K_EPOCH = 3155673600;
 
-// Convert BCD to Decima
+// Convert BCD to Decimal
 int bcd_to_decimal(u8 bcd)
 {
     return ((bcd >> 4) * 10) + (bcd & 0x0F);
