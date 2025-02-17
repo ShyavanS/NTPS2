@@ -23,15 +23,6 @@
 *.a
 
 #
-# Unprocessed font and texture files
-#
-*.py
-*.xcf
-*.png
-*.raw
-*.ttf
-
-#
 # Files that we don't want to ignore
 #
 !.gitignore
