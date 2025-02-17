@@ -23,7 +23,16 @@
 *.a
 
 #
-# files that we don't want to ignore
+# Unprocessed font and texture files
+#
+*.py
+*.xcf
+*.png
+*.raw
+*.ttf
+
+#
+# Files that we don't want to ignore
 #
 !.gitignore
 !.gitattributes
@@ -36,9 +45,13 @@
 #
 githash.h
 
-#objects and embedded files subfolders
+#
+# Objects and embedded files subfolders
+#
 obj/
 asm/
 
-# editor settings
+#
+# Editor settings
+#
 .vscode/

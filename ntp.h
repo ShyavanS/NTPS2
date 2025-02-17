@@ -1,6 +1,16 @@
+// ntp.h
+/*
+The header file for ntp.c, exposes the necessary functionality to other
+parts of the program for getting the time from the NTP server.
+This (and the premise of the entire app essentially), was inspired by
+joel16/NTPSP which in turn gives credit to lettier/ntpclient.
+*/
+
+// Include Statements
 #include <tamtypes.h>
 #include <libcdvd.h>
 
+// Struct for NTP time packet
 struct ntp_packet
 {
     u8 li_vn_mode;       // Li-VN-Mode
@@ -21,7 +31,14 @@ struct ntp_packet
 };
 typedef struct ntp_packet NTP_PACKET;
 
-extern sceCdCLOCK rtcTime;
-extern sceCdCLOCK ntpTime;
+extern sceCdCLOCK rtc_time; // Struct for storing RTC time
+extern sceCdCLOCK ntp_time; // Struct for storing NTP time
 
+/*
+Description: Subroutine to get time from NTP server in a format usable for the PS2.
+Inputs:      (sceCdCLOCK)rtc_time, (struct ntp_packet)time_packet
+Outputs:     (struct ntp_packet)time_packet
+Parameters:  void
+Returns:     (u32)timestamp
+*/
 u32 get_ntp_time(void);

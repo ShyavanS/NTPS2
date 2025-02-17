@@ -1,7 +1,21 @@
+// controller.c
+/*
+This file contains necessary functionality to read buttons for user input.
+*/
+
+// Include Statements
 #include "controller.h"
 
+// Struct to hold controller status
 struct padButtonStatus buttons;
 
+/*
+Description: Subroutine to read button status from the player 1 controller.
+Inputs:      (struct padButtonStatus)buttons
+Outputs:     void
+Parameters:  void
+Returns:     (u32)new_pad
+*/
 u32 read_pad(void)
 {
     u32 pad_data;

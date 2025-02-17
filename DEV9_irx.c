@@ -1,3 +1,10 @@
+// DEV9_irx.c
+/*
+This file contains the DEV9 module necessary for networking support on the PS2.
+The module is stored as an unsigned char array. Replicated from
+jmoseman01/ps2ConnectToSocket.
+*/
+
 #ifndef __DEV9_irx__
 #define __DEV9_irx__
 

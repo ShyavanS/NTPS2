@@ -1,3 +1,10 @@
+// SMAP_irx.c
+/*
+This file contains the SMAP module necessary for networking support on the PS2.
+The module is stored as an unsigned char array. Replicated from
+jmoseman01/ps2ConnectToSocket.
+*/
+
 #ifndef __SMAP_irx__
 #define __SMAP_irx__
 
