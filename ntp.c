@@ -9,9 +9,9 @@ was inspired by joel16/NTPSP which in turn gives credit to lettier/ntpclient.
 
 // Include Statements
 #include <string.h>
-#include <debug.h>
 #include <ps2ip.h>
 #include <netdb.h>
+#include "graphics.h"
 #include "time_math.h"
 #include "ntp.h"
 
@@ -19,6 +19,8 @@ struct ntp_packet time_packet; // Struct for NTP time packet
 
 sceCdCLOCK rtc_time; // Struct for storing RTC time
 sceCdCLOCK ntp_time; // Struct for storing NTP time
+
+float text_scale = 0.5f; // scale factor to print out time info on screen
 
 /*
 Description: Subroutine to get time from NTP server in a format usable for the PS2.
@@ -40,7 +42,7 @@ u32 get_ntp_time(void)
 
     if (sockfd < 0)
     {
-        scr_printf("Socket creation failed");
+        screen_printf(text_scale, "Socket creation failed");
         ps2ipDeinit();
         return -1;
     }
@@ -55,7 +57,7 @@ u32 get_ntp_time(void)
 
     if (!server)
     {
-        scr_printf("Failed to resolve NTP server");
+        screen_printf(text_scale, "Failed to resolve NTP server");
         close(sockfd);
         return -1;
     }
@@ -77,7 +79,7 @@ u32 get_ntp_time(void)
     // Send NTP packet to server
     if (sendto(sockfd, &time_packet, sizeof(time_packet), 0, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
-        scr_printf("Failed to send NTP request");
+        screen_printf(text_scale, "Failed to send NTP request");
         close(sockfd);
         ps2ipDeinit();
         return -1;
@@ -86,7 +88,7 @@ u32 get_ntp_time(void)
     // Recieve NTP packet from server
     if (recvfrom(sockfd, &time_packet, sizeof(time_packet), 0, NULL, NULL) < 0)
     {
-        scr_printf("Failed to receive NTP response");
+        screen_printf(text_scale, "Failed to receive NTP response");
         close(sockfd);
         ps2ipDeinit();
         return -1;

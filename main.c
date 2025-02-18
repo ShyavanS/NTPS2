@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
     // Storing controller state
     u32 pad_reading;
 
-    u8 sleep_time = 2;  // Time the system pauses for to display certain information on screen
-    float scale = 0.5f; // Scale factor to print out time info on screen
+    u8 sleep_time = 2;       // Time the system pauses for to display certain information on screen
+    float text_scale = 0.5f; // Scale factor to print out time info on screen
 
     // Get local timezone info
     int gmt_offset = configGetTimezone();
@@ -158,16 +158,16 @@ int main(int argc, char *argv[])
         draw_bg(); // Draw background image
 
         // Print out user info, A means triangle & # means square
-        screen_printf(scale, "NTPS2: A Bare-Bones NTP Client for the PS2\n");
-        screen_printf(scale, "------------------------------------------\n");
-        screen_printf(scale, "X: Save O: Exit\nA: Toggle Widescreen\n#: Toggle A->D (on startup)\n");
-        screen_printf(scale, "------------------------------------------\n\n");
+        screen_printf(text_scale, "NTPS2: A Bare-Bones NTP Client for the PS2\n");
+        screen_printf(text_scale, "------------------------------------------\n");
+        screen_printf(text_scale, "X: Save O: Exit\nA: Toggle Widescreen\n#: Toggle A->D (on startup)\n");
+        screen_printf(text_scale, "------------------------------------------\n\n");
 
         getSystemTime(gmt_offset, daylight_savings); // Get RTC time
 
         // Print out current RTC time
-        screen_printf(scale, "Current System Time:\n");
-        screen_printf(scale, "%04d-%02d-%02d %02d:%02d:%02d\n\n", bcd_to_decimal(rtc_time.year) + 2000, bcd_to_decimal(rtc_time.month), bcd_to_decimal(rtc_time.day), bcd_to_decimal(rtc_time.hour), bcd_to_decimal(rtc_time.minute), bcd_to_decimal(rtc_time.second));
+        screen_printf(text_scale, "Current System Time:\n");
+        screen_printf(text_scale, "%04d-%02d-%02d %02d:%02d:%02d\n\n", bcd_to_decimal(rtc_time.year) + 2000, bcd_to_decimal(rtc_time.month), bcd_to_decimal(rtc_time.day), bcd_to_decimal(rtc_time.hour), bcd_to_decimal(rtc_time.minute), bcd_to_decimal(rtc_time.second));
 
         toc = clock();                                             // Stop counting time elapsed
         adjusted_epoch = ps2_epoch + (toc - tic) / CLOCKS_PER_SEC; // Add time elapsed to NTP time
@@ -175,8 +175,8 @@ int main(int argc, char *argv[])
         time_t_to_sceCdCLOCK(adjusted_epoch, &ntp_time); // Convert NTP time to PS2 format including elapsed time
 
         // Print out time retrieved from NTP server
-        screen_printf(scale, "Proposed New System Time:\n");
-        screen_printf(scale, "%04d-%02d-%02d %02d:%02d:%02d\n\n", bcd_to_decimal(ntp_time.year) + 2000, bcd_to_decimal(ntp_time.month), bcd_to_decimal(ntp_time.day), bcd_to_decimal(ntp_time.hour), bcd_to_decimal(ntp_time.minute), bcd_to_decimal(ntp_time.second));
+        screen_printf(text_scale, "Proposed New System Time:\n");
+        screen_printf(text_scale, "%04d-%02d-%02d %02d:%02d:%02d\n\n", bcd_to_decimal(ntp_time.year) + 2000, bcd_to_decimal(ntp_time.month), bcd_to_decimal(ntp_time.day), bcd_to_decimal(ntp_time.hour), bcd_to_decimal(ntp_time.minute), bcd_to_decimal(ntp_time.second));
 
         // Wait for controler to be ready
         while (padGetState(0, 0) != 6)
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
             adjusted_epoch = ps2_epoch + (toc - tic) / CLOCKS_PER_SEC; // Recalculate epoch
             setSystemTime(adjusted_epoch);                             // Set RTC with new time
 
-            screen_printf(scale, "Saved!");
+            screen_printf(text_scale, "Saved!");
 
             epoch = get_ntp_time();                                              // Get time from NTP server if user wants to set time again
             tic = clock();                                                       // Re-start elapsed time counter
@@ -210,7 +210,9 @@ int main(int argc, char *argv[])
         else if (pad_reading & PAD_CIRCLE)
         {
             sleep_time = 1; // Wait to update display with "exit" message
-            screen_printf(scale, "Exiting...");
+
+            screen_printf(text_scale, "Exiting...");
+
             send_frame();
             sleep(sleep_time);
             ps2ipDeinit();

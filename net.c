@@ -25,7 +25,7 @@ replicated from ps2ConnectToSocket/ps2ConnectToSocket.
 #include <netdb.h>
 #include "graphics.h"
 
-float scale = 0.5f; // Scale factor to print out link info on screen
+float text_scale = 0.5f; // Scale factor to print out link info on screen
 
 /*
 Description: Subroutine to apply network inteface configuration.
@@ -193,18 +193,18 @@ static void eth_print_link_status(void)
 	int mode, baseMode;
 
 	// SMAP is registered as the "sm0" device to the TCP/IP stack
-	screen_printf(scale, "Link:\t");
+	screen_printf(text_scale, "Link:\t");
 
 	if (NetManIoctl(NETMAN_NETIF_IOCTL_GET_LINK_STATUS, NULL, 0, NULL, 0) == NETMAN_NETIF_ETH_LINK_STATE_UP)
 	{
-		screen_printf(scale, "Up\n");
+		screen_printf(text_scale, "Up\n");
 	}
 	else
 	{
-		screen_printf(scale, "Down\n");
+		screen_printf(text_scale, "Down\n");
 	}
 
-	screen_printf(scale, "Mode:\t");
+	screen_printf(text_scale, "Mode:\t");
 
 	mode = NetManIoctl(NETMAN_NETIF_IOCTL_ETH_GET_LINK_MODE, NULL, 0, NULL, 0);
 
@@ -214,31 +214,31 @@ static void eth_print_link_status(void)
 	switch (baseMode)
 	{
 	case NETMAN_NETIF_ETH_LINK_MODE_10M_HDX:
-		screen_printf(scale, "10M HDX");
+		screen_printf(text_scale, "10M HDX");
 		break;
 	case NETMAN_NETIF_ETH_LINK_MODE_10M_FDX:
-		screen_printf(scale, "10M FDX");
+		screen_printf(text_scale, "10M FDX");
 		break;
 	case NETMAN_NETIF_ETH_LINK_MODE_100M_HDX:
-		screen_printf(scale, "100M HDX");
+		screen_printf(text_scale, "100M HDX");
 		break;
 	case NETMAN_NETIF_ETH_LINK_MODE_100M_FDX:
-		screen_printf(scale, "100M FDX");
+		screen_printf(text_scale, "100M FDX");
 		break;
 	default:
-		screen_printf(scale, "Unknown");
+		screen_printf(text_scale, "Unknown");
 	}
 
 	if (!(mode & NETMAN_NETIF_ETH_LINK_DISABLE_PAUSE))
 	{
-		screen_printf(scale, " with ");
+		screen_printf(text_scale, " with ");
 	}
 	else
 	{
-		screen_printf(scale, " without ");
+		screen_printf(text_scale, " without ");
 	}
 
-	screen_printf(scale, "Flow Control\n");
+	screen_printf(text_scale, "Flow Control\n");
 }
 
 /*
@@ -280,10 +280,10 @@ static void eth_print_IP_config(void)
 		dns[2] = ip4_addr3(dns_curr);
 		dns[3] = ip4_addr4(dns_curr);
 
-		screen_printf(scale, "IP:\t%d.%d.%d.%d\n"
-							 "NM:\t%d.%d.%d.%d\n"
-							 "GW:\t%d.%d.%d.%d\n"
-							 "DNS:\t%d.%d.%d.%d\n",
+		screen_printf(text_scale, "IP:\t%d.%d.%d.%d\n"
+								  "NM:\t%d.%d.%d.%d\n"
+								  "GW:\t%d.%d.%d.%d\n"
+								  "DNS:\t%d.%d.%d.%d\n",
 					  ip_address[0], ip_address[1], ip_address[2], ip_address[3],
 					  netmask[0], netmask[1], netmask[2], netmask[3],
 					  gateway[0], gateway[1], gateway[2], gateway[3],
@@ -291,7 +291,7 @@ static void eth_print_IP_config(void)
 	}
 	else
 	{
-		screen_printf(scale, "Unable to read IP address.\n");
+		screen_printf(text_scale, "Unable to read IP address.\n");
 	}
 }
 
@@ -313,7 +313,7 @@ void load_ipconfig(void)
 	// Attempt to apply the new link setting
 	if (eth_apply_net_IF_config(EthernetLinkMode) != 0)
 	{
-		screen_printf(scale, "Error: failed to set link mode.\n");
+		screen_printf(text_scale, "Error: failed to set link mode.\n");
 		return;
 	}
 
@@ -332,12 +332,12 @@ void load_ipconfig(void)
 	// Wait for the link to become ready
 	if (eth_wait_valid_net_IF_link_status() != 0)
 	{
-		screen_printf(scale, "Error: failed to get valid link status.\n");
+		screen_printf(text_scale, "Error: failed to get valid link status.\n");
 		return;
 	}
 
 	// Print out link info
-	screen_printf(scale, "Initialized:\n");
+	screen_printf(text_scale, "Initialized:\n");
 	eth_print_link_status();
 	eth_print_IP_config();
 }

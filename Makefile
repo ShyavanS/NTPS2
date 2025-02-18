@@ -19,7 +19,7 @@ EE_INCS := -I$(PS2DEV)/gsKit/include -I$(PS2SDK)/ports/include
 # Compilation Flags and Libraries
 EE_LDFLAGS := -L$(PS2DEV)/gsKit/lib -L$(PS2SDK)/ports/lib -s
 EE_LIBS = -lgskit -ldmakit -ljpeg_ps2_addons -lpng -ljpeg -lpad -lmc -lkbd -lm \
-		  -lpatches -lpoweroff -ldebug -lsior -lps2ips -lps2ip -lnetman
+		  -lpatches -lpoweroff -lsior -lps2ips -lps2ip -lnetman
 EE_CFLAGS := -mno-gpopt -G0 -fno-strict-aliasing
 
 # Include dependant headers for files
