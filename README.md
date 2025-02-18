@@ -11,7 +11,7 @@ Circle - Exits app
 
 Triangle - Toggle Widescreen/Standard
 
-Square (Can only be used on startup) - Sets resolution and switches from interlaced (480i NTSC or 576i PAL) to progressive (480p NTSC or 576p PAL) video output
+Square (Can only be used on startup) - Sets resolution and switches from interlaced (480i NTSC or 576i PAL) to progressive (480p) video output
 
 ## Acknowledgements
 This app was influenced and inspired by and uses components of the following individuals' work in addition to using the PS2SDK made by the PS2 Homebrew Development Community:
