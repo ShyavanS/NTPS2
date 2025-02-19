@@ -20,8 +20,6 @@ struct ntp_packet time_packet; // Struct for NTP time packet
 sceCdCLOCK rtc_time; // Struct for storing RTC time
 sceCdCLOCK ntp_time; // Struct for storing NTP time
 
-float text_scale = 0.5f; // scale factor to print out time info on screen
-
 /*
 Description: Subroutine to get time from NTP server in a format usable for the PS2.
 Inputs:      (sceCdCLOCK)rtc_time, (struct ntp_packet)time_packet

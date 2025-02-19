@@ -93,8 +93,7 @@ int main(int argc, char *argv[])
     u32 pad_reading;
 
     u8 sleep_time = 2;       // Time the system pauses for to display certain information on screen
-    float text_scale = 0.5f; // Scale factor to print out time info on screen
-
+    
     // Get local timezone info
     int gmt_offset = configGetTimezone();
     int daylight_savings = configIsDaylightSavingEnabled();

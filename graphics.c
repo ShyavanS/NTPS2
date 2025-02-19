@@ -15,6 +15,8 @@ a background image for the app.
 #include "ntps2_logo.h"
 #include "ntps2_font.h"
 
+float text_scale = 0.5f; // scale factor to print out time info on screen
+
 // Colours set up as unsigned 64-bit integers
 u64 black = GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00);
 u64 tex_col = GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0x00);
@@ -31,7 +33,7 @@ const u8 GRID_X = 28; // Character grid width for bitmap font
 const u8 GRID_Y = 40; // Character grid height for bitmap font
 u8 analog = 1;        // Analog video flag
 float pos_x = 0.0f;   // Starting X-position for printing to screen
-float pos_y = 0.0f;   // Starting Y-position for printing to screen
+float pos_y = 40.0f;   // Starting Y-position for printing to screen
 
 GSTEXTURE bg_texture;   // Background texture
 GSTEXTURE font_texture; // Font texture
@@ -307,7 +309,7 @@ Returns:     void
 void pos_reset(void)
 {
     pos_x = 0.0f;
-    pos_y = 0.0f;
+    pos_y = 40.0f;
 }
 
 /*

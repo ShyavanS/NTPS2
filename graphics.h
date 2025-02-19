@@ -7,6 +7,8 @@ parts of the program for drawing to the screen.
 // Include Statements
 #include <gsKit.h>
 
+extern float text_scale; // scale factor to print out time info on screen
+
 /*
 Description: Subroutine to toggle display from standard to widescreen.
              (initiated by triangle button)

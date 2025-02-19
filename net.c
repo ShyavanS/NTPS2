@@ -25,8 +25,6 @@ replicated from ps2ConnectToSocket/ps2ConnectToSocket.
 #include <netdb.h>
 #include "graphics.h"
 
-float text_scale = 0.5f; // Scale factor to print out link info on screen
-
 /*
 Description: Subroutine to apply network inteface configuration.
 Inputs:      void
