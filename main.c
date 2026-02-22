@@ -264,13 +264,6 @@ int main(int argc, char *argv[])
         else if (pad_reading & PAD_CIRCLE)
         {
             sleep_time = 1; // Wait to update display with "exit" message
-
-            screen_printf(text_scale, "Exiting...");
-
-            send_frame();
-            sleep(sleep_time);
-            ps2ipDeinit();
-
             break;
         }
 
@@ -290,11 +283,7 @@ int main(int argc, char *argv[])
     
     if (argc > 0 && argv[0]) {
         strncpy(config_path, argv[0], 256);
-        char* trim_point = strrchr(config_path, '\\');
-        screen_printf(text_scale, config_path);
-        screen_printf(text_scale, "\n");
-        send_frame();
-        sleep(sleep_time);
+        char* trim_point = strrchr(config_path, '/');
 
         if (!trim_point) {
             trim_point = strrchr(config_path, ':');
@@ -306,23 +295,15 @@ int main(int argc, char *argv[])
             strcat(trim_point, "NTPS2.txt");
 
             int parse = parseConfig(config_path, launch_file);
-            screen_printf(text_scale, "%d\n", parse);
-            send_frame();
-            sleep(sleep_time);
 
             if (!parse) {
-                screen_printf(text_scale, launch_file);
-                screen_printf(text_scale, "\n");
-                send_frame();
-                sleep(sleep_time);
-
                 int fd = open(launch_file, O_RDONLY);
                 
                 if (fd >= 0) {
-                    screen_printf(text_scale, "%d opened\n", fd);
+                    screen_printf(text_scale, "Found config. Exiting to specified ELF...");
                     send_frame();
-                    close(fd);
                     sleep(sleep_time);
+                    close(fd);
                     
                     static t_ExecData elfdata;
                     static char *args[1];
@@ -332,25 +313,13 @@ int main(int argc, char *argv[])
                     args[0] = launch_copy;
                     
                     int ret = SifLoadElf(launch_file, &elfdata);
-                    screen_printf(text_scale, "SifLoadElf: %d\n", ret);
-                    send_frame();
-                    sleep(sleep_time);
 
                     if (ret == 0) {
                         NetManDeinit();
                         ps2ipDeinit();
-                        for (int i = 0x100000; i < GetMemorySize(); i+= 64) {
-                            asm volatile(
-                                "\tsq $0, 0(%0) \n"
-                                "\tsq $0, 16(%0) \n"
-                                "\tsq $0, 32(%0) \n"
-                                "\tsq $0, 48(%0) \n" ::"r"(i)
-                            );
-                        }
                         SifExitRpc();
                         FlushCache(0);
                         FlushCache(2);
-
                         ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 1, args);
                     }
                 }
@@ -358,7 +327,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    screen_printf(text_scale, "default exit\n");
+    screen_printf(text_scale, "No config. Exiting to browser...");
     send_frame();
     sleep(sleep_time);
     return 0;
