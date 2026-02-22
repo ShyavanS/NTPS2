@@ -6,7 +6,7 @@ EE_BIN = NTPS2-UNC.ELF
 EE_BIN_PKD = NTPS2.ELF
 
 # Object files
-EE_OBJS = main.o DEV9_irx.o NETMAN_irx.o SMAP_irx.o usbd_irx.o usbmass_bd_irx.o usbhdfsd_irx.o time_math.o ntp.o net.o controller.o graphics.o
+EE_OBJS = main.o DEV9_irx.o NETMAN_irx.o SMAP_irx.o usbd_irx.o usbmass_bd_irx.o usbhdfsd_irx.o loader_elf.o time_math.o ntp.o net.o controller.o graphics.o
 
 # Build Directories
 EE_OBJS_DIR = obj/
@@ -26,6 +26,15 @@ EE_CFLAGS := -mno-gpopt -G0 -fno-strict-aliasing
 # Include dependant headers for files
 main.o: main.c time_math.h ntp.h net.h controller.h graphics.h
 graphics.o: ntps2_logo.h ntps2_font.h
+
+loader_elf.s: loader/loader.elf
+	(echo ".section .rodata"; \
+	 echo ".global loader_elf"; \
+	 echo "loader_elf:"; \
+	 echo ".incbin \"loader/loader.elf\"") > $@
+
+$(EE_OBJS_DIR)loader_elf.o: loader_elf.s | $(EE_OBJS_DIR)
+	$(EE_CC) $(EE_CFLAGS) -c $< -o $@
 
 all: githash.h $(EE_BIN_PKD)
 
@@ -55,7 +64,7 @@ githash.h:
 	printf '"\n#endif\n' >> $@
 
 clean:
-	rm -rf githash.h $(EE_BIN) $(EE_BIN_PKD) $(EE_ASM_DIR) $(EE_OBJS_DIR)
+	rm -rf githash.h $(EE_BIN) $(EE_BIN_PKD) $(EE_ASM_DIR) $(EE_OBJS_DIR) loader_elf.s
 
 rebuild: clean all
 

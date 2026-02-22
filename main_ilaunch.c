@@ -48,6 +48,36 @@ extern unsigned int size_usbmass_bd_irx;
 extern unsigned char usbhdfsd_irx[];
 extern unsigned int size_usbhdfsd_irx;
 
+extern void loader_elf;
+
+typedef struct {
+	u8	ident[16];
+	u16	type;
+	u16	machine;
+	u32	version;
+	u32	entry;
+	u32	phoff;
+	u32	shoff;
+	u32	flags;
+	u16	ehsize;
+	u16	phentsize;
+	u16	phnum;
+	u16	shentsize;
+	u16	shnum;
+	u16	shstrndx;
+} elf_header_t;
+
+typedef struct {
+	u32	type;
+	u32	offset;
+	void	*vaddr;
+	u32	paddr;
+	u32	filesz;
+	u32	memsz;
+	u32	flags;
+	u32	align;
+} elf_pheader_t;
+
 /*
 Description: Subroutine to get the system time from the RTC and convert to the local timezone.
 Inputs:      void
@@ -290,7 +320,7 @@ int main(int argc, char *argv[])
     
     if (argc > 0 && argv[0]) {
         strncpy(config_path, argv[0], 256);
-        char* trim_point = strrchr(config_path, '\\');
+        char* trim_point = strrchr(config_path, '/');
         screen_printf(text_scale, config_path);
         screen_printf(text_scale, "\n");
         send_frame();
@@ -324,35 +354,35 @@ int main(int argc, char *argv[])
                     close(fd);
                     sleep(sleep_time);
                     
-                    static t_ExecData elfdata;
-                    static char *args[1];
-                    static char launch_copy[256];
+                    static char exec_arg0[256];
+                    static char* exec_args[1] = {exec_arg0};
 
-                    memcpy(launch_copy, launch_file, 256);
-                    args[0] = launch_copy;
+                    strcpy(exec_arg0, launch_file);
+
+                    elf_header_t* eh = (elf_header_t*)&loader_elf;
+                    elf_pheader_t* eph = (elf_pheader_t*)((u8*)&loader_elf + eh -> phoff);
                     
-                    int ret = SifLoadElf(launch_file, &elfdata);
-                    screen_printf(text_scale, "SifLoadElf: %d\n", ret);
-                    send_frame();
-                    sleep(sleep_time);
-
-                    if (ret == 0) {
-                        NetManDeinit();
-                        ps2ipDeinit();
-                        for (int i = 0x100000; i < GetMemorySize(); i+= 64) {
-                            asm volatile(
-                                "\tsq $0, 0(%0) \n"
-                                "\tsq $0, 16(%0) \n"
-                                "\tsq $0, 32(%0) \n"
-                                "\tsq $0, 48(%0) \n" ::"r"(i)
-                            );
+                    for (int i = 0; i < eh -> phnum; i++) {
+                        u8* dest = (u8*)(eph[i].vaddr);
+                        u8* pdata = (u8*)(&loader_elf + eph[i].offset);
+                        for (int j = 0; j < eph[i].filesz; j++) dest[j] = pdata[j];
+                        if (eph[i].memsz > eph[i].filesz) {
+                            dest = (u8*)(eph[i].vaddr + eph[i].filesz);
+                            for (int j = 0; j < eph[i].memsz - eph[i].filesz; j++) dest[j] = 0;
                         }
-                        SifExitRpc();
-                        FlushCache(0);
-                        FlushCache(2);
-
-                        ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 1, args);
                     }
+
+                    screen_printf(text_scale, "e: %08x, p: %d, v: %08x, f: %d\n", eh->entry, eh->phnum, (u32)eph[0].vaddr, eph[0].filesz);
+                    send_frame();
+                    sleep(3);
+
+                    NetManDeinit();
+                    ps2ipDeinit();
+                    SifExitRpc();
+                    FlushCache(0);
+                    FlushCache(2);
+
+                    ExecPS2((void*)eh -> entry, 0, 1, exec_args);
                 }
             }
         }
