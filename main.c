@@ -330,5 +330,10 @@ int main(int argc, char *argv[])
     screen_printf(text_scale, "No config. Exiting to browser...");
     send_frame();
     sleep(sleep_time);
+    NetManDeinit();
+    ps2ipDeinit();
+    SifExitRpc();
+    FlushCache(0);
+    FlushCache(2);
     return 0;
 }
