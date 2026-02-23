@@ -1,1 +1,1 @@
-Storage_device:Path/to/desired_program.ELF
+Flag,Storage_device:Path/to/desired_app.ELF

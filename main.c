@@ -92,9 +92,13 @@ Outputs:     (char *)out_path
 Parameters:  (char *)config_file, (char *)out_path
 Returns:     int
 */
-int parseConfig(char *config_file, char *out_path)
+int parseConfig(char *config_file, char *out_path, int *auto_set)
 {
-    memset(out_path, 0, 256); // Zero out output path just in case
+
+    // Zero out things by default & set a buffer
+    char conf_buff[260];
+    memset(out_path, 0, 256);
+    *auto_set = 0;
 
     int conf = open(config_file, O_RDONLY); // Open config file in read mode
 
@@ -104,25 +108,62 @@ int parseConfig(char *config_file, char *out_path)
         return -1;
     }
 
-    int bytes = read(conf, out_path, 255); // Read config file
+    int bytes = read(conf, conf_buff, sizeof(conf_buff) - 1); // Read config file
+
+    close(conf);
 
     // Config file is empty or corrupted
     if (bytes <= 0)
     {
-        close(conf);
         return -2;
     }
 
-    out_path[bytes] = '\0'; // Null termination
+    conf_buff[bytes] = '\0'; // Null termination
 
-    close(conf);
-
-    size_t len = strlen(out_path);
+    size_t len = strlen(conf_buff);
 
     // Replace any newline terminators with null terminator
-    while (len > 0 && (out_path[len - 1] == '\n' || out_path[len - 1] == '\r' || out_path[len - 1] == ' '))
+    while (len > 0 && (conf_buff[len - 1] == '\n' || conf_buff[len - 1] == '\r' || conf_buff[len - 1] == ' '))
     {
-        out_path[--len] = '\0';
+        conf_buff[--len] = '\0';
+    }
+
+    char *sep = strchr(conf_buff, ','); // use comma seperator
+
+    // Config broken if there's no seperator
+    if (!sep)
+    {
+        return -3;
+    }
+
+    *sep = '\0'; // Split into two strings at seperator with null termiantor
+
+    // Set input flag according to first character
+    if (conf_buff[0] == '1')
+    {
+        *auto_set = 1;
+    }
+    else
+    {
+        *auto_set = 0;
+    }
+
+    strncpy(out_path, sep + 1, 255); // Copy path into output from buffer
+
+    // Null termination and define start
+    out_path[255] = '\0';
+    char *path_start = out_path;
+
+    // Remove leading whitespace
+    while (*path_start == ' ')
+    {
+        path_start++;
+    }
+
+    // Adjust start of string if needed
+    if (path_start != out_path)
+    {
+        memmove(out_path, path_start, strlen(path_start) + 1);
     }
 
     return 0;
@@ -158,9 +199,11 @@ int main(int argc, char *argv[])
     // Buffer to store controller information
     static char pad_buf[256] __attribute__((aligned(64)));
 
-    // Path info for executable to be launched after closing app
+    // Config file variables for parsing, input flag, and exit ELF
     char config_path[256];
     char launch_file[256];
+    int parse = -1;
+    int skip_input = 0;
 
     // Initialize SIF RPC & IOP reset
     SifInitRpc(0);
@@ -216,6 +259,29 @@ int main(int argc, char *argv[])
     sleep(sleep_time);        // Wait for user to view info before clearing screen
     mode_switch();            // Switch from persistent to oneshot draw queue for looping updates
 
+    // Check for config file in launch path of ELF (working directory)
+    if (argc > 0 && argv[0])
+    {
+        // Get current path and trim to last '/' to exclude ELF file
+        strncpy(config_path, argv[0], 256);
+        char *trim_point = strrchr(config_path, '/');
+
+        // In case file is at root of storage device, look for ':' instead of '/'
+        if (!trim_point)
+        {
+            trim_point = strrchr(config_path, ':');
+        }
+
+        if (trim_point)
+        {
+            // Null terminate & add config file name to path
+            *(trim_point + 1) = '\0';
+            strcat(trim_point, "NTPS2.txt");
+
+            parse = parseConfig(config_path, launch_file, &skip_input); // Check if config file is available & parse
+        }
+    }
+
     epoch = get_ntp_time();                                              // Get NTP epoch time
     tic = clock();                                                       // Start counting time elapsed
     ps2_epoch = time_NTP_to_time_t(epoch, gmt_offset, daylight_savings); // Convert to PS2 epoch in local timezone
@@ -260,8 +326,8 @@ int main(int argc, char *argv[])
             toggle_widescreen();
         }
 
-        // Save time on cross press or exit program on circle press
-        if (pad_reading & PAD_CROSS)
+        // Save time on cross press or exit program on circle press or perform tasks with no input with flag set
+        if ((pad_reading & PAD_CROSS) || skip_input)
         {
             sleep_time = 1; // Wait to update display with "save" message
 
@@ -275,6 +341,13 @@ int main(int argc, char *argv[])
             epoch = get_ntp_time();                                              // Get time from NTP server if user wants to set time again
             tic = clock();                                                       // Re-start elapsed time counter
             ps2_epoch = time_NTP_to_time_t(epoch, gmt_offset, daylight_savings); // Convert to PS2 epoch in local timezone
+
+            // Exit on flag set
+            if (skip_input)
+            {
+                screen_printf(text_scale, "\n");
+                break;
+            }
         }
         else if (pad_reading & PAD_CIRCLE)
         {
@@ -296,62 +369,40 @@ int main(int argc, char *argv[])
     padPortClose(0, 0);
     padEnd();
 
-    // Check for config file in launch path of ELF (working directory)
-    if (argc > 0 && argv[0])
+    // Check if config file was parsed earlier
+    if (!parse)
     {
-        // Get current path and trim to last '/' to exclude ELF file
-        strncpy(config_path, argv[0], 256);
-        char *trim_point = strrchr(config_path, '/');
+        int fd = open(launch_file, O_RDONLY); // Check if ELF specified is accessible
 
-        // In case file is at root of storage device, look for ':' instead of '/'
-        if (!trim_point)
+        if (fd >= 0)
         {
-            trim_point = strrchr(config_path, ':');
-        }
+            // Exit message & close ELF
+            screen_printf(text_scale, "Found config. Exiting to specified ELF...");
+            send_frame();
+            sleep(sleep_time);
+            close(fd);
 
-        if (trim_point)
-        {
-            // Null terminate & add config file name to path
-            *(trim_point + 1) = '\0';
-            strcat(trim_point, "NTPS2.txt");
+            // Static variables to store ELF info for launcher
+            static t_ExecData elfdata;
+            static char *args[1];
+            static char launch_copy[256];
 
-            int parse = parseConfig(config_path, launch_file); // Check if config file is available & parse
+            // Copy path to ELF
+            memcpy(launch_copy, launch_file, 256);
 
-            if (!parse)
+            // Load ELF into memory
+            args[0] = launch_copy;
+            int ret = SifLoadElf(launch_file, &elfdata);
+
+            // If load was successful, de-init network modules, exit RPC, & flush cache before launching ELF
+            if (ret == 0)
             {
-                int fd = open(launch_file, O_RDONLY); // Check if ELF specified is accessible
-
-                if (fd >= 0)
-                {
-                    // Exit message & close ELF
-                    screen_printf(text_scale, "Found config. Exiting to specified ELF...");
-                    send_frame();
-                    sleep(sleep_time);
-                    close(fd);
-
-                    // Static variables to store ELF info for launcher
-                    static t_ExecData elfdata;
-                    static char *args[1];
-                    static char launch_copy[256];
-
-                    // Copy path to ELF
-                    memcpy(launch_copy, launch_file, 256);
-
-                    // Load ELF into memory
-                    args[0] = launch_copy;
-                    int ret = SifLoadElf(launch_file, &elfdata);
-
-                    // If load was successful, de-init network modules, exit RPC, & flush cache before launching ELF
-                    if (ret == 0)
-                    {
-                        NetManDeinit();
-                        ps2ipDeinit();
-                        SifExitRpc();
-                        FlushCache(0);
-                        FlushCache(2);
-                        ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 1, args);
-                    }
-                }
+                NetManDeinit();
+                ps2ipDeinit();
+                SifExitRpc();
+                FlushCache(0);
+                FlushCache(2);
+                ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 1, args);
             }
         }
     }
