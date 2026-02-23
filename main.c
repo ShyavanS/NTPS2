@@ -6,6 +6,7 @@ in addition to displaying everything on the screen and getting user input via
 the controller.
 */
 
+// For File IO
 #define NEWLIB_PORT_AWARE
 
 // Include Statements
@@ -80,33 +81,47 @@ Returns:     void
 */
 void setSystemTime(time_t ntp_time_t)
 {
-    time_t_to_sceCdCLOCK(ntp_time_t, &ntp_time);
-    sceCdWriteClock(&ntp_time);
+    time_t_to_sceCdCLOCK(ntp_time_t, &ntp_time); // Convert Y2K epoch time to BCD in local timezone
+    sceCdWriteClock(&ntp_time);                  // Write RTC with converted time
 }
 
-int parseConfig(char* config_file, char* out_path) {
-    memset(out_path, 0, 256);
+/*
+Description: Subroutine parse the specified path of the ELF to be launched using the provided config file.
+Inputs:      void
+Outputs:     (char *)out_path
+Parameters:  (char *)config_file, (char *)out_path
+Returns:     int
+*/
+int parseConfig(char *config_file, char *out_path)
+{
+    memset(out_path, 0, 256); // Zero out output path just in case
 
-    int conf = open(config_file, O_RDONLY);
+    int conf = open(config_file, O_RDONLY); // Open config file in read mode
 
-    if (conf < 0) {
+    // Config file doesn't exist or is inaccessible
+    if (conf < 0)
+    {
         return -1;
     }
 
-    int bytes = read(conf, out_path, 255);
+    int bytes = read(conf, out_path, 255); // Read config file
 
-    if (bytes <= 0) {
+    // Config file is empty or corrupted
+    if (bytes <= 0)
+    {
         close(conf);
         return -2;
     }
 
-    out_path[bytes] = '\0';
+    out_path[bytes] = '\0'; // Null termination
 
     close(conf);
 
     size_t len = strlen(out_path);
 
-    while (len > 0 && (out_path[len - 1] == '\n' || out_path[len - 1] == '\r' || out_path[len - 1] == ' ')) {
+    // Replace any newline terminators with null terminator
+    while (len > 0 && (out_path[len - 1] == '\n' || out_path[len - 1] == '\r' || out_path[len - 1] == ' '))
+    {
         out_path[--len] = '\0';
     }
 
@@ -134,8 +149,8 @@ int main(int argc, char *argv[])
     // Storing controller state
     u32 pad_reading;
 
-    u8 sleep_time = 2;       // Time the system pauses for to display certain information on screen
-    
+    u8 sleep_time = 2; // Time the system pauses for to display certain information on screen
+
     // Get local timezone info
     int gmt_offset = configGetTimezone();
     int daylight_savings = configIsDaylightSavingEnabled();
@@ -147,7 +162,7 @@ int main(int argc, char *argv[])
     char config_path[256];
     char launch_file[256];
 
-    // Initialize SIF RPC
+    // Initialize SIF RPC & IOP reset
     SifInitRpc(0);
     while (!SifIopReset("", 0))
     {
@@ -164,21 +179,21 @@ int main(int argc, char *argv[])
     sbv_patch_enable_lmb();
     sbv_patch_disable_prefix_check();
 
-    // Load networking modules
+    // Load IRX modules for networking & USB storage
     SifExecModuleBuffer(DEV9_irx, size_DEV9_irx, 0, NULL, NULL);
     SifExecModuleBuffer(NETMAN_irx, size_NETMAN_irx, 0, NULL, NULL);
     SifExecModuleBuffer(SMAP_irx, size_SMAP_irx, 0, NULL, NULL);
     SifExecModuleBuffer(usbd_irx, size_usbd_irx, 0, NULL, NULL);
     SifExecModuleBuffer(usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
     SifExecModuleBuffer(usbhdfsd_irx, size_usbhdfsd_irx, 0, NULL, NULL);
-    
-    // Load IO modules
+
+    // Load built-in modules for MC storage, serial IO, & gamepad
     SifLoadModule("rom0:SIO2MAN", 0, NULL);
     SifLoadModule("rom0:MCMAN", 0, NULL);
     SifLoadModule("rom0:MCSERV", 0, NULL);
     SifLoadModule("rom0:PADMAN", 0, NULL);
 
-    mcInit(MC_TYPE_MC);
+    mcInit(MC_TYPE_MC); // Initialize memory card
 
     // Initialize player 1 controller
     padInit(0);
@@ -263,7 +278,7 @@ int main(int argc, char *argv[])
         }
         else if (pad_reading & PAD_CIRCLE)
         {
-            sleep_time = 1; // Wait to update display with "exit" message
+            sleep_time = 1; // Adjust refresh rate of display for showing exit message to user
             break;
         }
 
@@ -277,59 +292,76 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Close gamepad connection
     padPortClose(0, 0);
     padEnd();
 
-    
-    if (argc > 0 && argv[0]) {
+    // Check for config file in launch path of ELF (working directory)
+    if (argc > 0 && argv[0])
+    {
+        // Get current path and trim to last '/' to exclude ELF file
         strncpy(config_path, argv[0], 256);
-        char* trim_point = strrchr(config_path, '/');
+        char *trim_point = strrchr(config_path, '/');
 
-        if (!trim_point) {
+        // In case file is at root of storage device, look for ':' instead of '/'
+        if (!trim_point)
+        {
             trim_point = strrchr(config_path, ':');
         }
 
         if (trim_point)
         {
+            // Null terminate & add config file name to path
             *(trim_point + 1) = '\0';
             strcat(trim_point, "NTPS2.txt");
 
-            int parse = parseConfig(config_path, launch_file);
+            int parse = parseConfig(config_path, launch_file); // Check if config file is available & parse
 
-            if (!parse) {
-                int fd = open(launch_file, O_RDONLY);
-                
-                if (fd >= 0) {
+            if (!parse)
+            {
+                int fd = open(launch_file, O_RDONLY); // Check if ELF specified is accessible
+
+                if (fd >= 0)
+                {
+                    // Exit message & close ELF
                     screen_printf(text_scale, "Found config. Exiting to specified ELF...");
                     send_frame();
                     sleep(sleep_time);
                     close(fd);
-                    
+
+                    // Static variables to store ELF info for launcher
                     static t_ExecData elfdata;
                     static char *args[1];
                     static char launch_copy[256];
 
+                    // Copy path to ELF
                     memcpy(launch_copy, launch_file, 256);
+
+                    // Load ELF into memory
                     args[0] = launch_copy;
-                    
                     int ret = SifLoadElf(launch_file, &elfdata);
 
-                    if (ret == 0) {
+                    // If load was successful, de-init network modules, exit RPC, & flush cache before launching ELF
+                    if (ret == 0)
+                    {
                         NetManDeinit();
                         ps2ipDeinit();
                         SifExitRpc();
                         FlushCache(0);
                         FlushCache(2);
-                        ExecPS2((void*)elfdata.epc, (void*)elfdata.gp, 1, args);
+                        ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, 1, args);
                     }
                 }
             }
         }
     }
 
+    // Exit message for no/incorrect config file
     screen_printf(text_scale, "No config. Exiting to browser...");
     send_frame();
     sleep(sleep_time);
+
+    // De-init network modelues, exit RPC, & flush cache before exiting to OSDSYS browser
     NetManDeinit();
     ps2ipDeinit();
     SifExitRpc();

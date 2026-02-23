@@ -1,1 +1,1 @@
-mass:Apollo Save Tool/APOLLO.ELF
+Storage_device:Path/to/desired_program.ELF
